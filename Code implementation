@@ -1,0 +1,229 @@
+#include<iostream>
+#include<string>
+#include<climits>
+#include<vector>
+using namespace std;
+
+struct Path{
+	vector<string> pathnodes;
+	int Length;
+};
+
+class constructGragh{
+	private:
+		int numVer;
+		int numEdge;
+		int ** adjMatrix;
+		string * nameVer;
+		vector<Path> paths;//按序存储选出来的路径 
+		//Edge * edges;//图中的边集
+		int maxTrans;//中继点个数限制
+		bool * blacklist;//黑名单判断数组
+	public:
+	constructGragh(int m, int n){
+		numVer = m;
+		numEdge = n;
+		adjMatrix = new int * [numVer];
+		for(int i = 0; i < numVer; i++){
+			adjMatrix[i] = new int[numVer];
+			for(int j = 0; j < numVer; j++){
+				adjMatrix[i][j] = -1;
+			}
+		}
+		nameVer = new string[numVer];
+		blacklist = new bool[numVer];
+		maxTrans = INT_MAX;
+		
+		for(int i = 0; i < numVer; i++){
+			nameVer[i] = "-1";
+			blacklist[i] = false;
+		}
+	}
+	
+	~constructGragh(){
+		for(int i = 0; i < numVer; i++){
+			delete[] adjMatrix[i];
+		}
+		delete[] adjMatrix;
+		delete[] nameVer;
+		delete[] blacklist;
+	}
+	
+	void addVer(const string& x, int index){
+		if(nameVer[index] == "-1"){
+			nameVer[index] = x;
+			return;
+		}
+		cout<<"Position has been occupied."<<endl;
+	}
+	
+	void addEdge(const string& start, const string& ended, int weight){
+		int st = getVerIndex(start);
+		int end = getVerIndex(ended);
+		adjMatrix[st][end] = weight;
+		adjMatrix[end][st] = weight;
+	}
+	
+	int getVerIndex(const string& x){
+		for(int i = 0; i < numVer; i++){
+			if(nameVer[i] == x) return i;
+		}
+		cout<<"Not a Vertex.";
+		return -1;
+	}
+	
+	string getVerName(int index){
+		return nameVer[index];
+	}
+	
+	void banned(const string& x){
+		int tmpindex = getVerIndex(x);
+		if(tmpindex!=-1) blacklist[tmpindex] = true;
+	}
+	
+	void unbanned(const string& x){
+		int tmpindex = getVerIndex(x);
+		if(tmpindex!=-1) blacklist[tmpindex] = false;
+	}
+	
+	bool isbanned(const string& x){
+		int tmpindex = getVerIndex(x);
+		if(tmpindex == -1){
+			cout<<"Not found."<<endl;
+			return false;
+		}
+		return blacklist[tmpindex];
+	}
+	
+	void setmaxTrans(int max){
+		if(max<0){
+			maxTrans = INT_MAX;
+		}
+		else{
+			maxTrans = max;
+		}
+	}
+	
+	int getmaxTrans(){
+		return maxTrans;
+	}
+	
+	vector<Path> findKShortestPaths(string stVer, string endVer, int K){
+		paths.clear();
+		vector<Path> candidates;
+		int st = getVerIndex(stVer);
+		int end = getVerIndex(endVer);
+		
+		for(int i = 0; i < numVer; i++){
+			if(adjMatrix[st][i] != -1 && !isbanned(getVerName(i))){
+				Path tmpPath;
+				tmpPath.pathnodes.push_back(stVer);
+				tmpPath.pathnodes.push_back(getVerName(i));
+				tmpPath.Length = adjMatrix[st][i];
+				candidates.push_back(tmpPath);
+			}
+		}
+		
+		int pathCount = 0;
+		while(pathCount < K && !candidates.empty()){
+			int minindex = -1;
+			int min = INT_MAX;
+			for(int i = 0; i < candidates.size(); i++){
+				if(candidates.at(i).Length < min && candidates.at(i).pathnodes.size() <= maxTrans +2){
+				    min = candidates.at(i).Length;
+				    minindex = i;
+			    }
+			}
+			
+			Path chosenPath = candidates[minindex];
+			string tmpendVer = chosenPath.pathnodes.back();
+			candidates.erase(candidates.begin() + minindex);
+			
+			if(tmpendVer == endVer){
+				paths.push_back(chosenPath);
+				pathCount++;
+				continue;
+			}
+			
+			int tmped = getVerIndex(tmpendVer);	
+			for(int i = 0; i < numVer; i++){
+				if(adjMatrix[tmped][i] != -1 && !isbanned(getVerName(i))){
+					bool appeared = false;
+					for(int j = 0; j < chosenPath.pathnodes.size(); j++){
+						if(chosenPath.pathnodes.at(j) == getVerName(i)) appeared = true;
+					}
+					if(!appeared){
+						Path newPath = chosenPath;
+						newPath.pathnodes.push_back(getVerName(i));
+						newPath.Length += adjMatrix[tmped][i];
+						if(newPath.pathnodes.size() - 2 <= maxTrans){
+							candidates.push_back(newPath);
+						}
+					}
+				}
+			}
+		}
+		return paths;	
+	}
+};
+
+	int main(){
+		int m, n;
+		cin>>m>>n;
+		constructGragh graph(m, n);
+		for(int i = 0; i < m; i++){
+			string name;
+			cin>>name;
+			graph.addVer(name, i);
+		}
+		for(int i = 0; i < n; i++){
+			string start, ended;
+			int weight;
+			cin>>start>>ended>>weight;
+			graph.addEdge(start, ended, weight);
+		}
+		
+		
+		string command;
+		while(true){
+			cout<<endl<<"Please enter your next request."<<endl;
+		cout<<"Options include: ban X, unban X, maxTrans Y, paths A B k, quit."<<endl; 
+		cout<<endl;
+		cin>>command;
+		if(command == "ban"){
+			string target;
+			cin>>target;
+			graph.banned(target);
+		}
+		else if(command == "unban"){
+			string target;
+			cin>>target;
+			graph.unbanned(target);
+		}
+		else if(command == "maxTrans"){
+			int target;
+			cin>>target;
+			graph.setmaxTrans(target);
+		}
+		else if(command == "paths"){
+			string start, ended; int K;
+		    cin >> start >> ended >> K;
+		    vector<Path> result = graph.findKShortestPaths(start, ended, K);
+			cout<<"There are "<<result.size()<<" paths."<<endl;
+			for(int i = 0; i < result.size(); i++){
+		    Path tmp = result.at(i);
+			cout<<"Path "<<i<<": ";
+			for(int j = 0; j < tmp.pathnodes.size(); j++){
+				cout<<tmp.pathnodes.at(j);
+				if(j!=tmp.pathnodes.size() - 1){
+					cout<<"->";
+				}
+			}
+			cout<<", distance = "<<tmp.Length<<endl;
+			}
+		}
+		else if(command == "quit") break;
+		}
+		
+		return 0;
+	}
