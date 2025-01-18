@@ -1,11 +1,13 @@
 # Find-the-first-K-shortest-paths-in-the-undirected-graph
 
 Write a program that does the following:
+
 1.The program begins by receiving input related to building an undirected graph:
 (a) The first is two integers m,n, the former represents the number of vertices of the graph, followed by the number of edges.
 (b) Next enter m strings, which are the vertex names.
 (c) Finally, there are three inputs in line n, which are two strings S1,S2, and then an integer w.
 Specifically, there is an edge between the vertices of S1 and S2, with a weight of w.
+
 2.Then accept the string until you hit the keyword "quit" :
 (a) If you read "ban", read another string S1 and add it to the blacklist of relay points. Under the
 No point on the blacklist can be used as a relay point for all paths that are searched for the second time.
@@ -20,4 +22,5 @@ As a relay point. If the total number of paths meeting all conditions is less th
 Output from shortest to longest and indicate the length of each path. In addition, also print out the output
 The total number of paths.
 (e) If you read "quit", the program is over.
+
 3.The processing time of each instruction is required to be less than 3 seconds.
